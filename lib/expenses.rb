@@ -1,11 +1,10 @@
-class Expenses
-  attr_reader :description, :amount, :date, :category_id
+class Expense
+  attr_reader :description, :amount, :date, :id
 
   def initialize(attributes)
     @description = attributes[:description]
     @amount = attributes[:amount]
     @date = attributes[:date]
-    @category_id = attributes[:category_id]
   end
 
   def self.all
@@ -15,19 +14,24 @@ class Expenses
       description = result['description']
       amount = result['amount'].to_f
       date = result['date']
-      category_id = result['category_id'].to_i
-      expenses_array << Expenses.new(:description => description, :amount => amount, :date => date, :category_id => category_id)
+      expenses_array << Expense.new(:description => description, :amount => amount, :date => date)
     end
     expenses_array
   end
 
   def save
-    results = DB.exec("INSERT INTO expenses(description, amount, date, category_id) VALUES ('#{@description}', #{@amount}, '#{@date}', #{@category_id});")
-    #@id = results.first['id'].to_i
+    results = DB.exec("INSERT INTO expenses(description, amount, date) VALUES ('#{@description}', #{@amount}, '#{@date}') RETURNING id;")
+    @id = results.first['id'].to_i
   end
 
   def ==(another)
-    self.description == another.description && self.amount == another.amount && self.date == another.date && self.category_id == another.category_id
+    self.description == another.description && self.amount == another.amount && self.date == another.date
+  end
+
+  def self.create (attributes)
+    expense = Expense.new(attributes)
+    expense.save
+    expense
   end
 
 end
